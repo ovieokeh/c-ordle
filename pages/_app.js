@@ -90,7 +90,9 @@ function MyApp({ Component, pageProps }) {
       <main
         className={`p-6 items-center justify-center ${getStyles("center")}`}
       >
-        <h1 className="text-3xl mb-16 text-center">Competitive Wordle</h1>
+        <h1 className="sm:text-3xl sm:mb-16 mb-4 text-center">
+          Competitive Wordle
+        </h1>
 
         {!currentUser ? (
           <form

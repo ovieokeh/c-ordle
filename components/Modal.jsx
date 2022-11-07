@@ -25,13 +25,9 @@ export default function GameModal({
       <div className="flex flex-col items-center justify-center">
         <h2 className="text-center text-lg mb-4 text-orange-800">Game over</h2>
         {isWinner ? (
-          <p className="text-lime-600">
-            Congratulations, you won this round. Wanna play again?
-          </p>
+          <p className="text-lime-600">Congratulations, you won this round</p>
         ) : (
-          <p className="text-neutral-600">
-            {winner?.username} won this round. Wanna try again?
-          </p>
+          <p className="text-neutral-600">{winner?.username} won this round</p>
         )}
         <div className="flex gap-6 mt-4">
           <a className="text-sky-800" href="/">

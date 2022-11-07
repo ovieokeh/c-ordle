@@ -12,8 +12,8 @@ export default function Room({ currentUser, api, setApi, globalRoom }) {
   const [guesses, setGuesses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [winner, setWinner] = useState(null);
+  const [gameStartInterval, setGameStartInterval] = useState(5);
   const [redirectInterval, setRedirectInterval] = useState(5);
-  const [letterStateMapping, setLetterStateMapping] = useState({});
 
   useEffect(() => {
     let interval;
@@ -36,6 +36,27 @@ export default function Room({ currentUser, api, setApi, globalRoom }) {
     };
   }, [gameState, redirectInterval]);
 
+  useEffect(() => {
+    let interval;
+
+    if (gameState === "starting") {
+      interval = setInterval(() => {
+        if (gameStartInterval === 0) {
+          room.trigger("client-game-start", {});
+          return;
+        }
+
+        setGameStartInterval((prev) => prev - 1);
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [gameState, gameStartInterval, room]);
+
   useIsomorphicLayoutEffect(() => {
     if (currentUser) {
       let channelName = window?.location.pathname;
@@ -48,7 +69,7 @@ export default function Room({ currentUser, api, setApi, globalRoom }) {
           info: entry[1],
         }));
         if (players.length === MEMBER_COUNT_REQUIREMENT) {
-          subscription.trigger("client-game-start", {});
+          subscription.trigger("client-room-complete", {});
         }
         setPlayers(players);
       });
@@ -60,7 +81,7 @@ export default function Room({ currentUser, api, setApi, globalRoom }) {
 
           const newPlayers = [...prev, data];
           if (newPlayers.length === MEMBER_COUNT_REQUIREMENT) {
-            subscription.trigger("client-game-start", {});
+            subscription.trigger("client-room-complete", {});
           }
           globalRoom.trigger("client-global-event", {});
           return newPlayers;
@@ -77,6 +98,10 @@ export default function Room({ currentUser, api, setApi, globalRoom }) {
         globalRoom.trigger("client-global-event", {});
       });
 
+      subscription.bind("client-room-complete", () => {
+        setGameState("starting");
+      });
+
       subscription.bind("client-game-start", () => {
         setGameState("running");
       });
@@ -88,16 +113,7 @@ export default function Room({ currentUser, api, setApi, globalRoom }) {
           setWinner(guess.currentUser);
         }
 
-        const newLetterStateMapping = guess.cellState.reduce((acc, cur) => {
-          acc[cur.letter] = acc[cur.letter] === "valid" ? "valid" : cur.state;
-          return acc;
-        }, {});
-
         setGuesses((prev) => [...prev, guess]);
-        setLetterStateMapping((prev) => ({
-          ...prev,
-          ...newLetterStateMapping,
-        }));
       });
 
       setRoom(subscription);
@@ -139,7 +155,15 @@ export default function Room({ currentUser, api, setApi, globalRoom }) {
 
   if (!room) return null;
 
-  const ALPHABET = "abcdefghijklmnopqrstuvwxyz";
+  const ALPHABET = "qwertyuiopasdfghjklzxcvbnm";
+  const ownGuesses = guesses.filter((g) => g.currentUser.id === currentUser.id);
+  const letterState = ownGuesses
+    .map((g) => g.cellState)
+    .flat()
+    .reduce((acc, cur) => {
+      acc[cur.letter] = acc[cur.letter] === "valid" ? "valid" : cur.state;
+      return acc;
+    }, {});
 
   return (
     <div className="max-w-[600px] w-full mx-auto">
@@ -154,18 +178,20 @@ export default function Room({ currentUser, api, setApi, globalRoom }) {
           {"< "}Back ({currentUser.username})
         </button>
 
-        <div className="mb-4">
+        <div className="mb-4 max-w-[275px]">
           {ALPHABET.split("").map((letter) => {
+            const state = letterState[letter.toUpperCase()];
+
             return (
               <span
                 key={letter}
-                className={`inline-block px-1 ${
-                  letterStateMapping[letter.toUpperCase()]
-                    ? ["valid", "misplaced"].includes(
-                        letterStateMapping[letter.toUpperCase()]
-                      )
-                      ? "text-orange-500"
-                      : "text-gray-500"
+                className={`inline-flex items-center justify-center w-5 h-5 mx-1 ${
+                  state === "valid"
+                    ? "bg-green-600 text-white"
+                    : state === "misplaced"
+                    ? "bg-orange-500 text-white"
+                    : state === "invalid"
+                    ? "bg-gray-500 text-white opacity-50"
                     : ""
                 }`}
               >
@@ -176,10 +202,11 @@ export default function Room({ currentUser, api, setApi, globalRoom }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-16 md:flex-row ">
+      <div className="flex flex-col gap-16 sm:flex-row ">
         <Grid
           answer={ANSWER}
           gameState={gameState}
+          gameStartInterval={gameStartInterval}
           setGameState={setGameState}
           handleSubmitGuess={handleSubmitGuess}
         />

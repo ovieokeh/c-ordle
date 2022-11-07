@@ -29,6 +29,7 @@ export default function Grid({
   answer = "PLAIN",
   gameState,
   handleSubmitGuess,
+  gameStartInterval,
 }) {
   const [gridState, setGridState] = useState({
     currentRow: 0,
@@ -52,6 +53,27 @@ export default function Grid({
   }, [cellState, gridState.currentRow]);
 
   const checkBoard = useCallback(() => {
+    const currentGuess = getCurrentGuess();
+    const guessState = [];
+    for (const letterIdx in currentGuess) {
+      const letter = currentGuess[letterIdx];
+      const isCellMisplaced =
+        answer.includes(letter) && answer[letterIdx] !== letter;
+      const isCellCorrect =
+        answer.includes(letter) && answer[letterIdx] === letter;
+      const isCellInvalid = !answer.includes(letter);
+
+      guessState.push({
+        letter,
+        state: isCellInvalid
+          ? CELL_STATES.invalid
+          : isCellMisplaced
+          ? CELL_STATES.misplaced
+          : isCellCorrect
+          ? CELL_STATES.valid
+          : CELL_STATES.initial,
+      });
+    }
     const newCellState = {};
 
     for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
@@ -83,14 +105,12 @@ export default function Grid({
     }
 
     setCellState(newCellState);
-
-    const currentGuess = getCurrentGuess();
-    handleSubmitGuess(currentGuess, Object.values(newCellState));
+    handleSubmitGuess(currentGuess, Object.values(guessState));
   }, [answer, cellState, getCurrentGuess, handleSubmitGuess]);
 
   useEffect(() => {
     const handleKeypress = (event) => {
-      if (["waiting", "ended"].includes(gameState)) return;
+      if (["waiting", "starting", "ended"].includes(gameState)) return;
 
       const keyPressed = String.fromCharCode(event.keyCode);
       const { currentRow, currentColumn } = gridState;
@@ -157,23 +177,22 @@ export default function Grid({
   return (
     <div>
       {gameState === "waiting" && <p>Waiting for at least 3 players</p>}
+      {gameState === "starting" && <p>Game starts in {gameStartInterval}</p>}
 
       <div
         className={`grid relative ${
-          gameState === "waiting" ? "cursor-not-allowed" : ""
-        } gap-4 p-2 grid-rows-${numRows} grid-cols-${numColumns}`}
+          gameState !== "running" ? "cursor-not-allowed" : ""
+        } gap-1 p-2 grid-rows-${numRows} grid-cols-${numColumns}`}
       >
-        {gameState !== "running" && (
-          <div className=" bg-slate-900 opacity-50 absolute top-0 right-0 left-0 bottom-0" />
-        )}
         {grid.map((row, rowIndex) => {
           return (
-            <div key={rowIndex} className="flex gap-2">
+            <div key={rowIndex} className="flex gap-1">
               {row.map((cell, cellIndex) => {
                 const cellPos = `${rowIndex}, ${cellIndex}`;
                 const currentCell = `${gridState.currentRow}, ${gridState.currentColumn}`;
                 const cellData = cellState[cellPos] || {};
-                const isActiveCell = cellPos === currentCell;
+                const isActiveCell =
+                  gameState === "running" && cellPos === currentCell;
 
                 return (
                   <div
@@ -182,7 +201,7 @@ export default function Grid({
                     data-is-active={isActiveCell}
                     data-state={cellData.state}
                     className={`
-                    border flex items-center justify-center w-[62px] h-[62px] uppercase font-bold text-2xl
+                    border-2 flex shrink items-center justify-center w-11 h-11 uppercase font-bold text-2xl
                     data-[is-active=true]:border-green-500 data-[is-active=true]:color-green-500
                     data-[state=invalid]:bg-slate-500 data-[state=invalid]:text-white
                     data-[state=misplaced]:bg-yellow-500  data-[state=misplaced]:text-white

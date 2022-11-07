@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import GameModal from "./Modal";
 
 export default function GameEvents({
@@ -13,9 +12,25 @@ export default function GameEvents({
     <div className="mt-16">
       <h3 className="text-sm opacity-75 text-slate-500">Activity</h3>
       <ul className="text-sm opacity-75 text-indigo-500" id="game-events">
-        {guesses.map(({ currentUser, guess }) => (
+        {guesses.map(({ currentUser, guess, cellState }) => (
           <li key={currentUser.id + guess}>
-            {currentUser.username} played {guess}
+            {currentUser.username} played{" "}
+            <span>
+              {cellState.map((cell, idx) => (
+                <span
+                  key={idx}
+                  className={`${
+                    cell.state === "valid"
+                      ? " text-green-600"
+                      : cell.state === "misplaced"
+                      ? "text-orange-500"
+                      : "text-black"
+                  }`}
+                >
+                  {cell.letter}
+                </span>
+              ))}
+            </span>
           </li>
         ))}
       </ul>

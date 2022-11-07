@@ -18,16 +18,16 @@ export default function Home({ currentUser, rooms, globalRoom }) {
   );
 
   return currentUser && rooms ? (
-    <div className="flex flex-col items-center gap-16 max-w-[600px] w-full mx-auto">
+    <div className="flex flex-col items-center gap-4 max-w-[600px] w-full mx-auto">
       <p>Welcome back {currentUser.username}</p>
 
-      <div className="">
+      <div className="flex flex-col items-center">
         {iterableRooms.length ? (
           iterableRooms.map(([name, members]) => {
             return (
               <Link
                 key={name}
-                className="block py-2 px-4 mt-2 rounded hover:bg-slate-900 bg-slate-600 text-white no-underline"
+                className="block py-2 px-4 mt-2 rounded hover:bg-slate-600 hover:text-white text-slate-800 no-underline"
                 type="button"
                 href={`/rooms/${name}`}
               >
@@ -39,15 +39,14 @@ export default function Home({ currentUser, rooms, globalRoom }) {
         ) : (
           <div className="flex flex-col items-center">
             <p>No rooms currently available</p>
-
-            <button
-              className="py-2 px-4 mt-2 rounded hover:bg-slate-900 bg-slate-600 text-white"
-              onClick={() => startRoom()}
-            >
-              Start a room
-            </button>
           </div>
         )}
+        <button
+          className="py-2 px-4 mt-2 rounded hover:bg-slate-900 bg-slate-600 text-white"
+          onClick={() => startRoom()}
+        >
+          Start a room
+        </button>
       </div>
     </div>
   ) : null;
