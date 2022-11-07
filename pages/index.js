@@ -27,7 +27,7 @@ export default function Home({ currentUser, rooms, globalRoom }) {
             return (
               <Link
                 key={name}
-                className="block py-2 px-4 mt-2 rounded hover:bg-slate-600 hover:text-white text-slate-800 no-underline"
+                className="block py-2 px-4 mt-2 rounded hover:bg-slate-600 hover:text-white text-black dark:text-white no-underline"
                 type="button"
                 href={`/rooms/${name}`}
               >

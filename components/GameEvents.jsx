@@ -24,7 +24,7 @@ export default function GameEvents({
                       ? " text-green-600"
                       : cell.state === "misplaced"
                       ? "text-orange-500"
-                      : "text-black"
+                      : "text-black dark:text-white"
                   }`}
                 >
                   {cell.letter}
